@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Panel docente · Escape Room</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--tx:#1d2733;--mu:#5d6b7a;--ac:#1f4e8c;--ok:#2e7d4f;--bad:#b3392f;--bd:#d9d3c5;--hi:#e8eef8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12181f;--card:#1b242e;--tx:#e8edf2;--mu:#9aa8b6;--ac:#6fa3e6;--ok:#5cc189;--bad:#ef7d72;--bd:#2f3b48;--hi:#22303f}}
+:root[data-theme="dark"]{--bg:#12181f;--card:#1b242e;--tx:#e8edf2;--mu:#9aa8b6;--ac:#6fa3e6;--ok:#5cc189;--bad:#ef7d72;--bd:#2f3b48;--hi:#22303f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Georgia,"Times New Roman",serif;line-height:1.55}
+.w{max-width:760px;margin:0 auto;padding:16px}
+nav{display:flex;gap:8px;margin-bottom:16px}
+nav button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;cursor:pointer}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:20px;margin-bottom:14px}
+h1{font-size:1.7rem;margin:.2em 0}h2{font-size:1.2rem;margin:0 0 .4em}
+.mu{color:var(--mu);font-size:.92rem}
+.big{font-size:3.4rem;line-height:1;margin:0}
+input[type=text]{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;margin:10px 0}
+.b{display:inline-block;padding:11px 20px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;cursor:pointer}
+.b:disabled{opacity:.45;cursor:default}
+.b.g{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.b.danger{background:#9b2c2c;color:#fff;border:1px solid #9b2c2c}
+.locks{display:flex;gap:8px;margin-bottom:14px}
+.lk{flex:1;text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--bd);background:var(--card);font-size:1.25rem}
+.lk.cur{border-color:var(--ac);background:var(--hi)}
+.lk.done{border-color:var(--ok)}
+.ctx{background:var(--hi);border-left:4px solid var(--ac);padding:12px 14px;border-radius:8px;margin:10px 0}
+.op{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;cursor:pointer}
+.op:hover:not(:disabled){border-color:var(--ac)}
+.op.sel{border-color:var(--ac);background:var(--hi)}
+.op.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,transparent)}
+.op.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.msg{padding:12px 14px;border-radius:10px;margin:10px 0}
+.msg.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);border:1px solid var(--ok)}
+.msg.no{background:color-mix(in srgb,var(--bad) 15%,transparent);border:1px solid var(--bad)}
+.hint{background:color-mix(in srgb,#e0a800 18%,transparent);border:1px dashed #b98a00;padding:10px 14px;border-radius:10px;margin:10px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.tb{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:560px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left}
+th{color:var(--mu);font-weight:normal;font-size:.82rem;text-transform:uppercase}
+.pill{padding:2px 9px;border-radius:99px;font-size:.8rem;border:1px solid var(--bd)}
+.pill.f{border-color:var(--ok);color:var(--ok)}
+.hide{display:none}
+.nota{font-size:3rem;color:var(--ac);margin:.1em 0}
+.authbox{max-width:460px;margin:30px auto}.authbox input{width:100%;padding:12px;margin:7px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}.authmsg{margin-top:10px}.teacherOnly{display:none}
+</style>
+</head>
+<body>
+<div class="w">
+<nav><button class="on">📡 Panel docente</button><button id="goStudent">🔐 Escape Room</button></nav>
+<section id="login" class="c authbox">
+<h2>🔐 Acceso docente</h2><p class="mu">Esta página es exclusiva para el docente.</p>
+<label>Correo</label><input id="email" type="email" autocomplete="username" placeholder="correo del docente">
+<label>Contraseña</label><input id="password" type="password" autocomplete="current-password" placeholder="Contraseña">
+<button class="b" id="loginBtn">Entrar al panel</button><p class="mu authmsg" id="authMsg"></p>
+</section>
+<section id="panel" class="c hide">
+<div class="row"><h1>Panel en vivo</h1><span class="mu">🕒 <span id="clock"></span></span></div>
+<div class="row" style="margin:10px 0">
+<div><h2 id="groupTitle">Grupo 1</h2><div class="mu" id="sessionInfo">Sesión activa</div><div class="mu" id="sessionId"></div></div>
+<div class="row">
+<button class="b g" id="saveBtn">💾 Guardar resultados</button>
+<button class="b" id="newBtn">🔄 Nuevo grupo</button>
+<button class="b danger" id="resetBtn">🗑️ Limpiar trabajo</button>
+<button class="b g" id="logoutBtn">Salir</button>
+</div></div>
+<p class="mu" id="status">Conectando…</p>
+<div class="tb"><table><thead><tr><th>Estudiante</th><th>Ingreso</th><th>Última actividad</th><th>Cerradura</th><th>Aciertos</th><th>Nota final</th></tr></thead><tbody id="rows"></tbody></table></div>
+</section>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+const SUPABASE_URL="https://lwvahgozwszbmfmfdlvr.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_QxjDQHOQfPzcfDIuss2IMQ_eJphb_lr";
+const {createClient}=window.supabase;
+const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const QLEN=5;
+let active={grupo:1,id:"",creada:null};
+let channel=null,poll=null;
+const $=id=>document.getElementById(id);
+const hm=iso=>iso?new Date(iso).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—";
+function status(t,ok=false){$("status").textContent=t;$("status").style.color=ok?"var(--ok)":"";}
+function sessionUI(){$("groupTitle").textContent="Grupo "+active.grupo;$("sessionInfo").textContent="Sesión activa · "+hm(active.creada);$("sessionId").textContent="ID de sesión · "+active.id;}
+function makeSession(g){return {grupo:g,id:"g"+g+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),creada:new Date().toISOString()};}
+async function readControl(){
+ const {data,error}=await supabase.from("sesiones").select("grupo,session_id,inicio").eq("id","__control__").eq("tipo","control").maybeSingle();
+ if(error) throw error;
+ if(!data||!data.session_id) throw new Error("No existe una sesión activa en __control__.");
+ active={grupo:Number(data.grupo)||1,id:data.session_id,creada:data.inicio};sessionUI();return active;
+}
+async function load(){
+ try{await readControl();
+  const {data,error}=await supabase.from("sesiones").select("id,nombre,inicio,actividad,cerradura,aciertos,terminado,fin,nota,session_id,grupo,tipo").eq("tipo","estudiante").eq("session_id",active.id).order("inicio",{ascending:true});
+  if(error)throw error;render(data||[]);status("Panel actualizado · "+(data||[]).length+" estudiante(s).",true);
+ }catch(e){console.error(e);status("Error: "+e.message);}
+}
+function render(rows){const b=$("rows");b.innerHTML="";if(!rows.length){const tr=b.insertRow(),td=tr.insertCell();td.colSpan=6;td.className="mu";td.textContent="Aún no hay estudiantes en la sesión actual.";return}rows.forEach(r=>{const tr=b.insertRow();const vals=[r.nombre||"—",hm(r.inicio),hm(r.terminado?r.fin:r.actividad),r.terminado?"Completado":((r.cerradura||1)+" de "+QLEN),(r.aciertos??0)+" / "+QLEN,r.terminado?String(r.nota):"En curso"];vals.forEach((v,i)=>{const td=tr.insertCell();if(i===5){const s=document.createElement("span");s.className="pill"+(r.terminado?" f":"");s.textContent=v;td.appendChild(s)}else td.textContent=v})})}
+function download(){
+ const table=$("rows");const wb=XLSX.utils.book_new();const data=[["Grupo",active.grupo],["Sesión",active.id],["Generado",new Date().toLocaleString("es-CO")],[],["Estudiante","Ingreso","Última actividad","Cerradura","Aciertos","Nota final"]];
+ [...table.rows].forEach(tr=>data.push([...tr.cells].map(td=>td.innerText)));const ws=XLSX.utils.aoa_to_sheet(data);ws["!cols"]=[{wch:24},{wch:22},{wch:22},{wch:16},{wch:14},{wch:14}];XLSX.utils.book_append_sheet(wb,ws,"Resultados");XLSX.writeFile(wb,"resultados-grupo-"+active.grupo+"-"+new Date().toISOString().slice(0,10)+".xlsx");
+}
+async function newGroup(){if(!confirm("¿Guardar resultados y abrir el siguiente grupo? Los datos anteriores se conservarán."))return;download();const ns=makeSession(active.grupo+1);const {error}=await supabase.from("sesiones").upsert({id:"__control__",tipo:"control",nombre:"__CONTROL__",inicio:ns.creada,actividad:ns.creada,cerradura:0,aciertos:0,terminado:false,fin:null,nota:null,session_id:ns.id,grupo:ns.grupo},{onConflict:"id"});if(error){alert("No se pudo crear el grupo: "+error.message);return}active=ns;sessionUI();await load();}
+async function reset(){if(!confirm("Esto borrará todos los resultados de estudiantes. ¿Continuar?"))return;if(!confirm("Última confirmación: se perderán los resultados no descargados."))return;const {error}=await supabase.from("sesiones").delete().eq("tipo","estudiante");if(error){alert("No se pudo limpiar: "+error.message);return}const ns=makeSession(1);const {error:e2}=await supabase.from("sesiones").upsert({id:"__control__",tipo:"control",nombre:"__CONTROL__",inicio:ns.creada,actividad:ns.creada,cerradura:0,aciertos:0,terminado:false,fin:null,nota:null,session_id:ns.id,grupo:1},{onConflict:"id"});if(e2){alert("Se borraron los estudiantes, pero falló el reinicio: "+e2.message);return}active=ns;sessionUI();await load();alert("Trabajo limpiado. Grupo 1 iniciado con una sesión nueva.");}
+async function login(){$("authMsg").textContent="";const {data,error}=await supabase.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error){$("authMsg").textContent="No se pudo iniciar sesión: "+error.message;return}await start();}
+async function start(){const {data:{session}}=await supabase.auth.getSession();if(!session){$("login").classList.remove("hide");$("panel").classList.add("hide");return}$("login").classList.add("hide");$("panel").classList.remove("hide");await load();if(channel)await supabase.removeChannel(channel);channel=supabase.channel("docente-panel-"+Date.now()).on("postgres_changes",{event:"*",schema:"public",table:"sesiones"},()=>load()).subscribe();if(poll)clearInterval(poll);poll=setInterval(load,3000);}
+$("loginBtn").onclick=login;$("password").addEventListener("keydown",e=>{if(e.key==="Enter")login()});$("saveBtn").onclick=download;$("newBtn").onclick=newGroup;$("resetBtn").onclick=reset;$("logoutBtn").onclick=async()=>{if(poll)clearInterval(poll);if(channel)await supabase.removeChannel(channel);await supabase.auth.signOut();location.reload()};$("goStudent").onclick=()=>location.href="/";setInterval(()=>$("clock").textContent=new Date().toLocaleTimeString("es-CO"),1000);start();
+</script></body></html>
