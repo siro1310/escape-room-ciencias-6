@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Escape Room: Caracteres taxonómicos</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--tx:#1d2733;--mu:#5d6b7a;--ac:#1f4e8c;--ok:#2e7d4f;--bad:#b3392f;--bd:#d9d3c5;--hi:#e8eef8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12181f;--card:#1b242e;--tx:#e8edf2;--mu:#9aa8b6;--ac:#6fa3e6;--ok:#5cc189;--bad:#ef7d72;--bd:#2f3b48;--hi:#22303f}}
+:root[data-theme="dark"]{--bg:#12181f;--card:#1b242e;--tx:#e8edf2;--mu:#9aa8b6;--ac:#6fa3e6;--ok:#5cc189;--bad:#ef7d72;--bd:#2f3b48;--hi:#22303f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Georgia,"Times New Roman",serif;line-height:1.55}
+.w{max-width:760px;margin:0 auto;padding:16px}
+nav{display:flex;gap:8px;margin-bottom:16px}
+nav button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;cursor:pointer}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.c{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:20px;margin-bottom:14px}
+h1{font-size:1.7rem;margin:.2em 0}h2{font-size:1.2rem;margin:0 0 .4em}
+.mu{color:var(--mu);font-size:.92rem}
+.big{font-size:3.4rem;line-height:1;margin:0}
+input[type=text]{width:100%;padding:12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;margin:10px 0}
+.b{display:inline-block;padding:11px 20px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;cursor:pointer}
+.b:disabled{opacity:.45;cursor:default}
+.b.g{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+.b.danger{background:#9b2c2c;color:#fff;border:1px solid #9b2c2c}
+.locks{display:flex;gap:8px;margin-bottom:14px}
+.lk{flex:1;text-align:center;padding:8px 2px;border-radius:10px;border:1px solid var(--bd);background:var(--card);font-size:1.25rem}
+.lk.cur{border-color:var(--ac);background:var(--hi)}
+.lk.done{border-color:var(--ok)}
+.ctx{background:var(--hi);border-left:4px solid var(--ac);padding:12px 14px;border-radius:8px;margin:10px 0}
+.op{display:block;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;cursor:pointer}
+.op:hover:not(:disabled){border-color:var(--ac)}
+.op.sel{border-color:var(--ac);background:var(--hi)}
+.op.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,transparent)}
+.op.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.msg{padding:12px 14px;border-radius:10px;margin:10px 0}
+.msg.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);border:1px solid var(--ok)}
+.msg.no{background:color-mix(in srgb,var(--bad) 15%,transparent);border:1px solid var(--bad)}
+.hint{background:color-mix(in srgb,#e0a800 18%,transparent);border:1px dashed #b98a00;padding:10px 14px;border-radius:10px;margin:10px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.tb{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:560px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--bd);text-align:left}
+th{color:var(--mu);font-weight:normal;font-size:.82rem;text-transform:uppercase}
+.pill{padding:2px 9px;border-radius:99px;font-size:.8rem;border:1px solid var(--bd)}
+.pill.f{border-color:var(--ok);color:var(--ok)}
+.hide{display:none}
+.nota{font-size:3rem;color:var(--ac);margin:.1em 0}
+.authbox{max-width:460px;margin:30px auto}.authbox input{width:100%;padding:12px;margin:7px 0;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}.authmsg{margin-top:10px}.teacherOnly{display:none}
+</style>
+</head>
+<body>
+<div class="w">
+<nav><button id="tG" class="on">🔐 Escape Room</button><button id="tP" class="teacherOnly">📡 Panel en vivo</button></nav>
+
+<section id="vG">
+  <div id="intro" class="c">
+    <p class="big">🌿🦅🔬</p>
+    <h1>El herbario sellado</h1>
+    <p>Es de noche en el Instituto Taxón. Entras al herbario a recoger tus apuntes y, de pronto, las puertas se cierran con un chasquido. Una voz grabada de la Dra. Alba Taxón suena por los altavoces:</p>
+    <div class="ctx">«Solo quien entienda cómo se describen, se comparan y se clasifican los seres vivos podrá salir. Cinco cerraduras protegen la salida. Cada una se abre razonando, no adivinando.»</div>
+    <p class="mu">Reglas: 5 cerraduras, cada una con una pregunta tipo ICFES. Para abrir la siguiente debes acertar la actual. Solo cuenta el <b>primer intento</b> de cada cerradura. Las pistas son opcionales y no restan puntos. Nota: de 1.0 a 5.0 según tus aciertos.</p>
+    <label for="nm"><b>Tu nombre completo</b></label>
+    <input type="text" id="nm" maxlength="60" placeholder="Ej.: Ana María Gómez" autocomplete="name">
+    <button class="b" id="go">Entrar al herbario</button>
+    <p class="mu" id="sessionStudent">Sesión: Grupo 1</p><p class="mu" id="dbst"></p>
+  </div>
+
+  <div id="game" class="hide">
+    <div class="row mu" style="margin-bottom:8px"><span id="who"></span><span>⏱ <span id="el">00:00</span></span></div>
+    <div class="locks" id="locks"></div>
+    <div class="c" id="qc"></div>
+  </div>
+
+  <div id="win" class="c hide" style="text-align:center">
+    <p class="big">🚪✨</p>
+    <h1>¡Has escapado del herbario!</h1>
+    <p id="wt"></p>
+    <p class="mu">Tu nota final</p>
+    <p class="nota" id="wn"></p>
+    <p id="wd" class="mu"></p>
+    <p class="mu">Tu resultado ya aparece en el panel en vivo.</p>
+  </div>
+</section>
+
+<section id="vP" class="hide">
+  <div id="teacherLogin" class="c authbox">
+    <h2>🔐 Acceso docente</h2>
+    <p class="mu">Esta sección es exclusiva para el docente.</p>
+    <label for="teacherEmail"><b>Correo</b></label>
+    <input type="email" id="teacherEmail" autocomplete="username" placeholder="correo del docente">
+    <label for="teacherPassword"><b>Contraseña</b></label>
+    <input type="password" id="teacherPassword" autocomplete="current-password" placeholder="Contraseña">
+    <button class="b" id="teacherLoginBtn">Entrar al panel</button>
+    <p class="mu authmsg" id="teacherAuthMsg"></p>
+  </div>
+  <div id="teacherPanel" class="c hide">
+    <div class="row"><h2>Panel en vivo</h2><span class="mu">🕒 <span id="clk"></span></span></div>
+    <div class="row" style="margin:10px 0">
+      <div><b id="sessionTitle">Grupo 1</b><div class="mu" id="sessionInfo">Sesión activa</div></div>
+      <div class="row">
+        <button class="b g" id="saveSession">💾 Guardar resultados</button>
+        <button class="b" id="newSession">🔄 Nuevo grupo</button>
+        <button class="b danger" id="resetAll">🗑️ Limpiar trabajo</button>
+        <button class="b g" id="teacherLogout">Salir</button>
+      </div>
+    </div>
+    <p class="mu" id="pst">Conectando…</p>
+    <div class="ctx" id="sessionWarning" style="display:none"></div>
+    <div class="tb"><table>
+      <thead><tr><th>Estudiante</th><th>Ingreso</th><th>Última actividad</th><th>Cerradura</th><th>Aciertos</th><th>Nota final</th></tr></thead>
+      <tbody id="pb"></tbody>
+    </table></div>
+  </div>
+</section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://lwvahgozwszbmfmfdlvr.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_QxjDQHOQfPzcfDIuss2IMQ_eJphb_lr";
+const { createClient } = window.supabase;
+const supabaseClient=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+
+const Q=[
+{t:"Cerradura 1 · Forma por fuera, estructura por dentro",
+ ctx:"Un biólogo registra tres observaciones de un ave: I. forma del pico; II. tipo de esqueleto (óseo o cartilaginoso); III. coloración del plumaje.",
+ q:"¿Cuáles de estas observaciones corresponden a caracteres morfológicos?",
+ o:["Solo I","II y III","I y III","I, II y III"],c:2,
+ h:"Lo morfológico se refiere a la forma y estructura externa. Lo anatómico, a la estructura interna.",
+ e:"El pico y la coloración son características externas (morfológicas). El tipo de esqueleto es estructura interna, es decir, un carácter anatómico."},
+{t:"Cerradura 2 · El cuerpo en funcionamiento",
+ ctx:"En una mañana fría, una lagartija permanece inmóvil hasta que el sol la calienta, mientras que un ratón se mueve activo desde temprano. Ambos tienen cuatro extremidades.",
+ q:"¿Qué carácter explica mejor la diferencia de comportamiento entre los dos animales?",
+ o:["El número de extremidades, un carácter morfológico","La regulación de la temperatura (homeotermia o poiquilotermia), un carácter fisiológico","El tipo de dentición, un carácter anatómico","El número de células, un carácter celular"],c:1,
+ h:"Piensa en cómo cada organismo regula su temperatura. ¿Es forma, estructura interna o funcionamiento?",
+ e:"Regular o no la temperatura corporal es una función del organismo: carácter fisiológico. El número de extremidades es igual en ambos, así que no explica la diferencia."},
+{t:"Cerradura 3 · Bajo el microscopio",
+ ctx:"Se observan dos muestras. Muestra 1: un organismo unicelular sin núcleo definido. Muestra 2: un organismo pluricelular con núcleo, pared celular y cloroplastos.",
+ q:"¿Qué caracteres celulares permiten diferenciar claramente estas muestras?",
+ o:["Su hábitat y su comportamiento diurno o nocturno","La secuencia de su ADN y sus marcadores moleculares","El tipo de esqueleto y el sistema respiratorio","El tipo de célula (procariota o eucariota) y el número de células (unicelular o pluricelular)"],c:3,
+ h:"Fíjate en la presencia de núcleo y en cuántas células forman a cada organismo.",
+ e:"Sin núcleo definido = procariota; con núcleo = eucariota. Además, uno es unicelular y el otro pluricelular. Ambos criterios son caracteres celulares."},
+{t:"Cerradura 4 · El código que no se ve",
+ ctx:"Dos especies se ven muy distintas por fuera, pero al comparar su secuencia de ADN y el número y forma de sus cromosomas se encuentra una similitud genética muy alta.",
+ q:"¿Qué se puede inferir a partir de estos resultados?",
+ o:["Probablemente tienen un parentesco evolutivo cercano, pues los caracteres genéticos ayudan a establecer relaciones de parentesco","Que no están emparentadas, porque su apariencia externa es diferente","Que viven en el mismo hábitat y comparten el mismo nicho","Que tienen el mismo tipo de nutrición y de respiración"],c:0,
+ h:"Los caracteres taxonómicos sirven, entre otras cosas, para establecer relaciones de parentesco evolutivo.",
+ e:"La similitud genética es evidencia de parentesco, aunque la morfología sea distinta. La apariencia externa por sí sola no basta para descartar la relación."},
+{t:"Cerradura 5 · La última puerta",
+ ctx:"Una investigadora describe un organismo así: «Vive en el desierto, es de hábitos nocturnos, se alimenta de insectos y se camufla con el color de la arena».",
+ q:"¿A qué tipo de caracteres corresponde principalmente esta descripción?",
+ o:["Celulares, porque describe el tamaño y la forma de sus células","Anatómicos, porque describe la organización de sus órganos","Ecológicos, porque describe su hábitat, comportamiento, alimentación y adaptaciones al medio","Genéticos, porque describe la información hereditaria"],c:2,
+ h:"Hábitat, comportamiento, tipo de alimentación y camuflaje se relacionan con el ambiente y el modo de vida.",
+ e:"Hábitat (desierto), comportamiento (nocturno), alimentación (insectos) y adaptación (camuflaje) son caracteres ecológicos, relacionados con el ambiente y el modo de vida."}
+];
+const $=id=>document.getElementById(id);
+const nota=k=>(1+4*k/Q.length).toFixed(1);
+const hm=iso=>iso?new Date(iso).toLocaleTimeString("es-CO",{hour:"2-digit",minute:"2-digit",second:"2-digit"}):"—";
+let S={name:"",i:0,ok:0,fails:0,first:true,start:null,end:null,done:false,hint:false,picked:null,solved:false};
+let sid="s"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+let ACTIVE_SESSION={grupo:1,id:"grupo-1",creada:new Date().toISOString()};
+let SESSION_ROWS=[];
+let dbReady=false;
+let teacherMode=new URLSearchParams(location.search).get("docente")==="1";
+let teacherUser=null;
+let sessionChannel=null;
+let resultsChannel=null;
+
+function makeSession(grupo){
+  return {grupo,id:"g"+grupo+"-"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),creada:new Date().toISOString()};
+}
+function updateSessionUI(){
+  $("sessionTitle").textContent="Grupo "+ACTIVE_SESSION.grupo;
+  if($("sessionStudent"))$("sessionStudent").textContent="Sesión: Grupo "+ACTIVE_SESSION.grupo;
+  $("sessionInfo").textContent="Sesión activa · "+hm(ACTIVE_SESSION.creada||null);
+}
+function setStatus(msg,ok=false){
+  $("pst").textContent=msg;
+  $("pst").style.color=ok?"var(--ok)":"";
+}
+function tab(p){
+  if(p && !teacherMode && !teacherUser){return;}
+  $("vG").classList.toggle("hide",p);$("vP").classList.toggle("hide",!p);$("tG").classList.toggle("on",!p);$("tP").classList.toggle("on",p);
+}
+$("tG").onclick=()=>tab(false);
+$("tP").onclick=()=>tab(true);
+if(teacherMode){$("tP").classList.remove("teacherOnly");$("tP").classList.remove("hide");}
+
+async function sync(){
+  if(!dbReady||!S.name)return false;
+  const d={
+    id:sid,
+    nombre:S.name,
+    inicio:S.start,
+    actividad:new Date().toISOString(),
+    cerradura:Math.min(S.i+1,Q.length),
+    aciertos:S.ok,
+    terminado:S.done,
+    fin:S.end||null,
+    nota:S.done?Number(nota(S.ok)):null,
+    session_id:ACTIVE_SESSION.id,
+    grupo:Number(ACTIVE_SESSION.grupo),
+    tipo:"estudiante"
+  };
+  const {error}=await supabaseClient.from("sesiones").upsert(d,{onConflict:"id"});
+  if(error){
+    console.error("Error guardando estudiante:",error,d);
+    $("dbst").textContent="Error guardando: "+error.message;
+    $("dbst").style.color="var(--bad)";
+    return false;
+  }
+  $("dbst").textContent="Registro guardado · Grupo "+ACTIVE_SESSION.grupo;
+  $("dbst").style.color="var(--ok)";
+  return true;
+}
+async function loadRows(){
+  const {data:{session}}=await supabaseClient.auth.getSession();
+  if(!session?.user){
+    teacherUser=null;
+    $("teacherLogin").classList.remove("hide");
+    $("teacherPanel").classList.add("hide");
+    setStatus("Inicia sesión como docente para ver el panel.");
+    return false;
+  }
+  teacherUser=session.user;
+  const {data,error}=await supabaseClient
+    .from("sesiones")
+    .select("*")
+    .eq("tipo","estudiante")
+    .eq("grupo",Number(ACTIVE_SESSION.grupo))
+    .order("inicio",{ascending:true});
+  if(error){
+    console.error("Error leyendo sesiones:",error);
+    setStatus("Error al leer estudiantes: "+error.message);
+    return false;
+  }
+  panel(data||[]);
+  setStatus("Panel actualizado · "+(data?.length||0)+" estudiante(s).",true);
+  return true;
+}
+function csvCell(v){return '"'+String(v??"").replace(/"/g,'""')+'"'}
+function downloadCSV(rows){
+  const head=["Grupo","Estudiante","Ingreso","Fin","Estado","Cerradura","Aciertos","Nota final"];
+  const lines=[head.map(csvCell).join(";")];
+  rows.forEach(r=>lines.push([
+    r.grupo||ACTIVE_SESSION.grupo,r.nombre,r.inicio?new Date(r.inicio).toLocaleString("es-CO"):"",
+    r.fin?new Date(r.fin).toLocaleString("es-CO"):"",
+    r.terminado?"Finalizado":"En actividad",r.cerradura||"",r.aciertos??0,r.nota??""
+  ].map(csvCell).join(";")));
+  const blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="resultados-grupo-"+ACTIVE_SESSION.grupo+"-"+new Date().toISOString().slice(0,10)+".csv";
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function downloadSession(){
+  const rows=SESSION_ROWS.slice().sort((a,b)=>String(a.inicio).localeCompare(String(b.inicio)));
+  if(!rows.length){alert("No hay estudiantes registrados en el grupo actual.");return false}
+
+  // Excel (.xlsx) con formato legible y una hoja de resumen.
+  if(window.XLSX){
+    const data=rows.map(r=>({
+      "Grupo":Number(r.grupo||ACTIVE_SESSION.grupo),
+      "Estudiante":r.nombre||"",
+      "Ingreso":r.inicio?new Date(r.inicio):"",
+      "Fin":r.fin?new Date(r.fin):"",
+      "Estado":r.terminado?"Finalizado":"En actividad",
+      "Cerradura":r.cerradura||"",
+      "Aciertos":r.aciertos??0,
+      "Nota final":r.nota??""
+    }));
+    const ws=XLSX.utils.json_to_sheet(data);
+    ws['!cols']=[
+      {wch:9},{wch:28},{wch:21},{wch:21},{wch:17},{wch:12},{wch:12},{wch:13}
+    ];
+    for(let i=0;i<rows.length;i++){
+      const excelRow=i+2;
+      if(ws['C'+excelRow]) ws['C'+excelRow].z='dd/mm/yyyy hh:mm:ss';
+      if(ws['D'+excelRow]) ws['D'+excelRow].z='dd/mm/yyyy hh:mm:ss';
+      if(ws['H'+excelRow]) ws['H'+excelRow].z='0.0';
+    }
+    ws['!autofilter']={ref:'A1:H'+(rows.length+1)};
+
+    const finished=rows.filter(r=>r.terminado);
+    const average=finished.length
+      ? finished.reduce((sum,r)=>sum+Number(r.nota||0),0)/finished.length
+      : null;
+    const summary=[
+      ["RESULTADOS — ESCAPE ROOM CIENCIAS"],
+      ["Grupo",Number(ACTIVE_SESSION.grupo)],
+      ["Fecha de descarga",new Date()],
+      ["Estudiantes registrados",rows.length],
+      ["Finalizados",finished.length],
+      ["En actividad",rows.length-finished.length],
+      ["Promedio del grupo",average===null?"":Number(average.toFixed(2))],
+      [],
+      ["DETALLE DE ESTUDIANTES"],
+      ["Estudiante","Ingreso","Fin","Estado","Cerradura","Aciertos","Nota final"]
+    ];
+    rows.forEach(r=>summary.push([
+      r.nombre||"",
+      r.inicio?new Date(r.inicio):"",
+      r.fin?new Date(r.fin):"",
+      r.terminado?"Finalizado":"En actividad",
+      r.cerradura||"",
+      r.aciertos??0,
+      r.nota??""
+    ]));
+    const ws2=XLSX.utils.aoa_to_sheet(summary);
+    ws2['!cols']=[{wch:28},{wch:21},{wch:21},{wch:17},{wch:12},{wch:12},{wch:13}];
+    ws2['B3'].z='dd/mm/yyyy hh:mm:ss';
+    if(average!==null) ws2['B7'].z='0.00';
+    for(let i=0;i<rows.length;i++){
+      const excelRow=i+11;
+      if(ws2['B'+excelRow]) ws2['B'+excelRow].z='dd/mm/yyyy hh:mm:ss';
+      if(ws2['C'+excelRow]) ws2['C'+excelRow].z='dd/mm/yyyy hh:mm:ss';
+      if(ws2['G'+excelRow]) ws2['G'+excelRow].z='0.0';
+    }
+    ws2['!autofilter']={ref:'A10:G'+(10+rows.length)};
+
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws2,"Resumen");
+    XLSX.utils.book_append_sheet(wb,ws,"Resultados");
+    XLSX.writeFile(wb,"resultados-grupo-"+ACTIVE_SESSION.grupo+"-"+new Date().toISOString().slice(0,10)+".xlsx");
+    return true;
+  }
+
+  // Respaldo si no carga la librería de Excel.
+  downloadCSV(rows);
+  return true;
+}
+$("saveSession").onclick=()=>{if(!teacherUser){alert("Acceso solo para el docente.");return}downloadSession()};
+$("newSession").onclick=async()=>{
+  if(!teacherUser){alert("Acceso solo para el docente.");return}
+  if(!dbReady){alert("La conexión con Supabase todavía no está lista.");return}
+  if(!confirm("¿Guardarás los resultados del grupo actual antes de iniciar otro? El historial no se borrará. Pulsa Aceptar para crear el siguiente grupo."))return;
+  downloadSession();
+  const next=(Number(ACTIVE_SESSION.grupo)||1)+1;
+  const ns=makeSession(next);
+  const {error}=await supabaseClient.from("sesiones").upsert({
+    id:"__control__",tipo:"control",nombre:"__CONTROL__",inicio:ns.creada,actividad:ns.creada,
+    cerradura:0,aciertos:0,terminado:false,fin:null,nota:null,session_id:ns.id,grupo:ns.grupo
+  },{onConflict:"id"});
+  if(error){console.error(error);alert("No se pudo crear el nuevo grupo: "+error.message);return}
+  ACTIVE_SESSION=ns;
+  updateSessionUI();
+  await loadRows();
+};
+$("resetAll").onclick=async()=>{
+  if(!teacherUser){alert("Acceso solo para el docente.");return}
+  if(!dbReady){alert("La conexión con Supabase todavía no está lista.");return}
+  const ok1=confirm("ATENCIÓN: esto borrará TODOS los resultados guardados de estudiantes de todos los grupos en Supabase y reiniciará la actividad en Grupo 1.\n\nÚsalo solo para borrar las pruebas antes de comenzar la clase real.\n\n¿Deseas continuar?");
+  if(!ok1)return;
+  const ok2=confirm("ÚLTIMA CONFIRMACIÓN: se eliminarán las notas y registros de prueba que no hayas descargado. ¿Borrar todo y empezar desde cero?");
+  if(!ok2)return;
+  const {error:delError}=await supabaseClient.from("sesiones").delete().neq("tipo","control");
+  if(delError){console.error(delError);alert("No se pudo limpiar el trabajo: "+delError.message);return}
+  const ns=makeSession(1);
+  const {error:ctrlError}=await supabaseClient.from("sesiones").upsert({
+    id:"__control__",tipo:"control",nombre:"__CONTROL__",inicio:ns.creada,actividad:ns.creada,
+    cerradura:0,aciertos:0,terminado:false,fin:null,nota:null,session_id:ns.id,grupo:1
+  },{onConflict:"id"});
+  if(ctrlError){console.error(ctrlError);alert("Se borraron los registros, pero no se pudo reiniciar el grupo: "+ctrlError.message);return}
+  ACTIVE_SESSION=ns;
+  SESSION_ROWS=[];
+  updateSessionUI();
+  await loadRows();
+  alert("Trabajo limpiado correctamente. La actividad comienza nuevamente en Grupo 1.");
+};
+$("go").onclick=async()=>{
+  const n=$("nm").value.trim();
+  if(n.length<3){$("nm").focus();$("nm").placeholder="Escribe tu nombre completo";return}
+  if(!dbReady){alert("Espera un momento: el sistema todavía se está conectando.");return}
+  S.name=n;S.start=new Date().toISOString();
+  $("intro").classList.add("hide");$("game").classList.remove("hide");
+  $("who").textContent="👤 "+n;
+  await sync();draw();
+};
+function locks(){
+  $("locks").innerHTML="";
+  Q.forEach((_,k)=>{
+    const d=document.createElement("div");
+    d.className="lk"+(k<S.i?" done":k===S.i?" cur":"");
+    d.textContent=k<S.i?"🔓":k===S.i?"🔐":"🔒";
+    $("locks").appendChild(d);
+  });
+}
+function draw(){
+  locks();
+  const q=Q[S.i];S.first=true;S.hint=false;S.picked=null;S.solved=false;
+  const c=$("qc");c.innerHTML="";
+  const add=(tag,txt,cls)=>{const e=document.createElement(tag);e.textContent=txt;if(cls)e.className=cls;c.appendChild(e);return e};
+  add("p","Cerradura "+(S.i+1)+" de "+Q.length,"mu");
+  add("h2",q.t.split(" · ")[1]);
+  add("div",q.ctx,"ctx");
+  add("p",q.q).style.fontWeight="bold";
+  const box=document.createElement("div");c.appendChild(box);
+  const fb=document.createElement("div");c.appendChild(fb);
+  const r=document.createElement("div");r.className="row";r.style.marginTop="10px";
+  const hb=document.createElement("button");hb.className="b g";hb.textContent="💡 Pista (opcional)";
+  const cb=document.createElement("button");cb.className="b";cb.textContent="Probar cerradura";cb.disabled=true;
+  const L="ABCD";
+  q.o.forEach((t,k)=>{
+    const b=document.createElement("button");b.className="op";b.textContent=L[k]+". "+t;
+    b.onclick=()=>{if(S.solved||b.disabled)return;S.picked=k;[...box.children].forEach((x,j)=>x.classList.toggle("sel",j===k&&!x.disabled));cb.disabled=false};
+    box.appendChild(b);
+  });
+  hb.onclick=()=>{if(S.hint)return;S.hint=true;const h=document.createElement("div");h.className="hint";h.textContent="💡 "+q.h;fb.prepend(h)};
+  cb.onclick=()=>check(box,fb,cb,hb);
+  r.append(hb,cb);c.appendChild(r);
+}
+function check(box,fb,cb,hb){
+  if(S.picked===null)return;
+  const q=Q[S.i],k=S.picked;
+  fb.querySelectorAll(".msg").forEach(x=>x.remove());
+  const m=document.createElement("div");
+  if(k===q.c){
+    if(S.first)S.ok++;
+    S.solved=true;
+    [...box.children].forEach((x,j)=>{x.disabled=true;x.classList.remove("sel");if(j===q.c)x.classList.add("ok")});
+    m.className="msg ok";m.textContent="🔓 ¡Clic! La cerradura se abre. "+q.e;
+    const last=S.i===Q.length-1;
+    cb.textContent=last?"Abrir la puerta de salida":"Ir a la siguiente cerradura";cb.disabled=false;hb.disabled=true;
+    cb.onclick=()=>{if(last){finish()}else{S.i++;sync();draw()}};
+    sync();
+  }else{
+    S.first=false;S.fails++;
+    const bad=box.children[k];bad.classList.remove("sel");bad.classList.add("no");bad.disabled=true;
+    S.picked=null;cb.disabled=true;
+    m.className="msg no";m.textContent="🔒 La cerradura se atasca. Relee el contexto y vuelve a intentarlo. (Este intento ya no suma a tu nota.)";
+  }
+  fb.appendChild(m);
+}
+function finish(){
+  S.done=true;S.end=new Date().toISOString();
+  clearInterval(tm);sync();
+  $("game").classList.add("hide");$("win").classList.remove("hide");
+  $("wt").textContent=S.name+", cruzaste las cinco cerraduras del herbario sellado.";
+  $("wn").textContent=nota(S.ok)+" / 5.0";
+  $("wd").textContent=S.ok+" de "+Q.length+" respuestas acertadas al primer intento · Tiempo: "+$("el").textContent;
+}
+const tm=setInterval(()=>{
+  if(!S.start||S.done)return;
+  const s=Math.floor((Date.now()-new Date(S.start))/1000);
+  $("el").textContent=String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+},1000);
+
+setInterval(()=>{$("clk").textContent=new Date().toLocaleTimeString("es-CO")},1000);
+function panel(rows){
+  const b=$("pb");b.innerHTML="";
+  SESSION_ROWS=rows.filter(r=>r.tipo!=="control" && Number(r.grupo)===Number(ACTIVE_SESSION.grupo));
+  const shown=SESSION_ROWS.slice().sort((x,y)=>String(x.inicio).localeCompare(String(y.inicio)));
+  if(!shown.length){const tr=b.insertRow();const td=tr.insertCell();td.colSpan=6;td.className="mu";td.textContent="Aún no hay estudiantes en el grupo actual.";return}
+  shown.forEach(r=>{
+    const tr=b.insertRow();
+    const cells=[String(r.nombre||"—"),hm(r.inicio),hm(r.terminado?r.fin:r.actividad),r.terminado?"Completado":(r.cerradura||1)+" de "+Q.length,String(r.aciertos??0)+" / "+Q.length,r.terminado?String(r.nota):"En curso"];
+    cells.forEach((t,k)=>{
+      const td=tr.insertCell();
+      if(k===5){const s=document.createElement("span");s.className="pill"+(r.terminado?" f":"");s.textContent=t;td.appendChild(s);if(r.terminado)s.style.fontWeight="bold"}
+      else td.textContent=t;
+    });
+  });
+}
+updateSessionUI();
+panel([]);
+$("go").disabled=true;
+
+async function initRealtime(){
+  try{
+    const {data:control,error}=await supabaseClient.from("sesiones").select("*").eq("id","__control__").eq("tipo","control").maybeSingle();
+    if(error)throw error;
+    if(!control)throw new Error("No existe la sesión de control. Ejecuta SUPABASE_SECURITY.sql en Supabase.");
+    ACTIVE_SESSION={grupo:Number(control.grupo)||1,id:control.session_id||("g"+(Number(control.grupo)||1)),creada:control.inicio||new Date().toISOString()};
+    updateSessionUI();
+    dbReady=true;
+    $("go").disabled=false;
+    $("dbst").textContent="Registro preparado.";
+    if(teacherMode){
+      const {data:{session}}=await supabaseClient.auth.getSession();
+      if(session?.user){
+        teacherUser=session.user;
+        showTeacherPanel();
+      }else{
+        teacherUser=null;
+        $("teacherLogin").classList.remove("hide");
+        $("teacherPanel").classList.add("hide");
+        setStatus("Inicia sesión como docente para ver el panel.");
+      }
+    }
+    await watchControl();
+  }catch(err){
+    console.error(err);
+    setStatus("No se pudo conectar con Supabase. Revisa la configuración y la tabla sesiones.");
+    $("dbst").textContent="No se pudo conectar al registro en vivo.";
+  }
+}
+
+async function teacherLogin(){
+  const email=$("teacherEmail").value.trim();
+  const password=$("teacherPassword").value;
+  const msg=$("teacherAuthMsg");
+  msg.textContent="";
+  if(!email||!password){msg.textContent="Escribe correo y contraseña.";return}
+  $("teacherLoginBtn").disabled=true;
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  $("teacherLoginBtn").disabled=false;
+  if(error){console.error(error);msg.textContent="No se pudo iniciar sesión: "+error.message;return}
+  teacherUser=data.user;
+  showTeacherPanel();
+}
+function showTeacherPanel(){
+  $("teacherLogin").classList.add("hide");
+  $("teacherPanel").classList.remove("hide");
+  $("tP").classList.remove("teacherOnly");
+  $("tG").classList.remove("on");
+  $("tP").classList.add("on");
+  $("vG").classList.add("hide");
+  $("vP").classList.remove("hide");
+  setStatus("Cargando estudiantes…");
+  loadRows();
+  if(!resultsChannel){
+    resultsChannel=supabaseClient.channel("sesiones-cambios-"+Math.random().toString(36).slice(2))
+      .on("postgres_changes",{event:"*",schema:"public",table:"sesiones"},async payload=>{
+        console.log("Cambio recibido:",payload.eventType,payload.new||payload.old);
+        await loadRows();
+      })
+      .subscribe((status)=>{
+        console.log("Realtime:",status);
+        if(status==="SUBSCRIBED") setStatus("Panel en vivo conectado.",true);
+      });
+  }
+}
+async function teacherLogout(){
+  if(resultsChannel){
+    await supabaseClient.removeChannel(resultsChannel);
+    resultsChannel=null;
+  }
+  await supabaseClient.auth.signOut();
+  teacherUser=null;
+  $("teacherPanel").classList.add("hide");
+  $("teacherLogin").classList.remove("hide");
+  $("tP").classList.add("teacherOnly");
+  tab(false);
+}
+$("teacherLoginBtn").onclick=teacherLogin;
+$("teacherLogout").onclick=teacherLogout;
+$("teacherPassword").addEventListener("keydown",e=>{if(e.key==="Enter")teacherLogin()});
+
+async function watchControl(){
+  sessionChannel=supabaseClient.channel("control-cambios")
+    .on("postgres_changes",{event:"UPDATE",schema:"public",table:"sesiones",filter:"id=eq.__control__"},payload=>{
+      const data=payload.new;
+      if(!data||data.tipo!=="control"||!data.session_id)return;
+      const changed=data.session_id!==ACTIVE_SESSION.id;
+      ACTIVE_SESSION={grupo:Number(data.grupo)||1,id:data.session_id,creada:data.inicio||new Date().toISOString()};
+      updateSessionUI();
+      if(changed && S.name){
+        alert("El docente inició un nuevo grupo. Esta sesión se cerrará en este dispositivo.");
+        location.reload();
+      }else if(teacherUser){
+        loadRows();
+      }
+    })
+    .subscribe();
+}
+
+initRealtime();
+</script>
+</body>
+</html>
